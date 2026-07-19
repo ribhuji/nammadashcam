@@ -1,0 +1,20 @@
+{
+  "label": "speed_breaker_false_positive",
+  "expected": "rejected:speed_breaker_profile",
+  "notes": "Strong horizontal edge band across road region.",
+  "event": {
+    "event_id": 1002,
+    "arduino_timestamp_ms": 11000,
+    "event_type": "suspected_pothole",
+    "speed_mps": 6.8,
+    "gps_available": false,
+    "severity": 0.76,
+    "confidence": 0.61,
+    "vertical_peak_g": 2.0,
+    "jerk_peak_gps": 9.2,
+    "gyro_peak_dps": 20.0,
+    "window_pre_ms": 500,
+    "window_post_ms": 700
+  },
+  "image": "speed_breaker_false_positive.jpg"
+}

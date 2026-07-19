@@ -1,0 +1,20 @@
+{
+  "label": "harsh_braking_false_positive",
+  "expected": "rejected:visual_score_too_low",
+  "notes": "Motion spike without obvious depression in frame.",
+  "event": {
+    "event_id": 1003,
+    "arduino_timestamp_ms": 12000,
+    "event_type": "suspected_pothole",
+    "speed_mps": 8.9,
+    "gps_available": false,
+    "severity": 0.70,
+    "confidence": 0.58,
+    "vertical_peak_g": 1.9,
+    "jerk_peak_gps": 8.7,
+    "gyro_peak_dps": 18.0,
+    "window_pre_ms": 500,
+    "window_post_ms": 700
+  },
+  "image": "harsh_braking_false_positive.jpg"
+}

@@ -1,0 +1,20 @@
+{
+  "label": "rough_road_vibration",
+  "expected": "rejected:visual_score_too_low",
+  "notes": "No distinct depression, only textured noise.",
+  "event": {
+    "event_id": 1004,
+    "arduino_timestamp_ms": 13000,
+    "event_type": "suspected_pothole",
+    "speed_mps": 5.5,
+    "gps_available": false,
+    "severity": 0.62,
+    "confidence": 0.49,
+    "vertical_peak_g": 1.8,
+    "jerk_peak_gps": 8.1,
+    "gyro_peak_dps": 16.0,
+    "window_pre_ms": 500,
+    "window_post_ms": 700
+  },
+  "image": "rough_road_vibration.jpg"
+}

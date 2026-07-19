@@ -1,0 +1,45 @@
+[project]
+name = "namma-dashcam"
+version = "0.1.0"
+description = "Linux-side verifier and uploader for the Namma Dashcam UNO Q project"
+readme = "../README.md"
+requires-python = "==3.12.*"
+dependencies = [
+  "httpx==0.27.0",
+  "numpy==2.1.0",
+  "opencv-python-headless==4.10.0.84",
+  "pydantic==2.8.2",
+  "pydantic-settings==2.3.4",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==8.3.2",
+  "ruff==0.6.2",
+  "ty==0.0.29",
+]
+
+[build-system]
+requires = ["hatchling==1.25.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/namma_dashcam"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "PTH", "RUF"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = ["-ra", "--strict-config", "--strict-markers"]

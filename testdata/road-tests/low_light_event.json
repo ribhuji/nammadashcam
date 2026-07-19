@@ -1,0 +1,20 @@
+{
+  "label": "low_light_event",
+  "expected": "rejected:low_light",
+  "notes": "Very dark frame should be rejected for low light.",
+  "event": {
+    "event_id": 1006,
+    "arduino_timestamp_ms": 15000,
+    "event_type": "suspected_pothole",
+    "speed_mps": 6.2,
+    "gps_available": false,
+    "severity": 0.79,
+    "confidence": 0.69,
+    "vertical_peak_g": 2.1,
+    "jerk_peak_gps": 9.5,
+    "gyro_peak_dps": 23.0,
+    "window_pre_ms": 500,
+    "window_post_ms": 700
+  },
+  "image": "low_light_event.jpg"
+}

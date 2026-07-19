@@ -1,0 +1,20 @@
+{
+  "label": "blurred_camera_event",
+  "expected": "rejected:blurred",
+  "notes": "Uniform frame should be rejected for blur.",
+  "event": {
+    "event_id": 1005,
+    "arduino_timestamp_ms": 14000,
+    "event_type": "suspected_pothole",
+    "speed_mps": 7.1,
+    "gps_available": false,
+    "severity": 0.84,
+    "confidence": 0.73,
+    "vertical_peak_g": 2.2,
+    "jerk_peak_gps": 10.0,
+    "gyro_peak_dps": 25.0,
+    "window_pre_ms": 500,
+    "window_post_ms": 700
+  },
+  "image": "blurred_camera_event.jpg"
+}

@@ -1,0 +1,20 @@
+{
+  "label": "pothole_true_positive",
+  "expected": "verified",
+  "notes": "Dark center depression with strong vertical spike.",
+  "event": {
+    "event_id": 1001,
+    "arduino_timestamp_ms": 10000,
+    "event_type": "suspected_pothole",
+    "speed_mps": 7.4,
+    "gps_available": false,
+    "severity": 0.88,
+    "confidence": 0.82,
+    "vertical_peak_g": 2.4,
+    "jerk_peak_gps": 12.1,
+    "gyro_peak_dps": 31.0,
+    "window_pre_ms": 500,
+    "window_post_ms": 700
+  },
+  "image": "pothole_true_positive.jpg"
+}
