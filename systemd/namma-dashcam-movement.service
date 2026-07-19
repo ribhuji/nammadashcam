@@ -1,0 +1,18 @@
+[Unit]
+Description=Namma Dashcam movement serial sidecar
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/nammadashcam
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONPATH=/opt/nammadashcam/src
+EnvironmentFile=-/etc/nammadashcam-movement.env
+SupplementaryGroups=dialout
+ExecStart=/opt/nammadashcam/.venv/bin/python -m pothole_dashcam.movement_main
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
