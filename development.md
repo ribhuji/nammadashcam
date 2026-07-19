@@ -89,7 +89,30 @@ Capture loop controls:
 - `--capture-max-frames` (default `0`, unbounded)
 - `--capture-max-seconds` (default `0`, unbounded)
 
+## Firmware (UNO Q MCU)
+
+MCU-side firmware now lives under:
+
+- `firmware/unoq_dashcam_mcu/unoq_dashcam_mcu.ino`
+- `firmware/README.md` (build/flash instructions)
+
+Install MCU dependencies once:
+
+```bash
+arduino-cli core update-index
+arduino-cli core install arduino:zephyr
+arduino-cli lib update-index
+arduino-cli lib install "Arduino_Modulino"
+```
+
+Build firmware:
+
+```bash
+arduino-cli compile --fqbn arduino:zephyr:unoq firmware/unoq_dashcam_mcu
+```
+
 ## Notes
 
+- Arduino libraries are not vendored in this repo; install them via Arduino CLI for reproducible team setup.
 - If `--inference-backend onnx` is selected but model file is missing, runtime falls back to stub inference and logs a warning.
 - Runtime artifacts are ignored via `.gitignore` under `runtime/`.
