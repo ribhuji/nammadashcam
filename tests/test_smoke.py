@@ -16,6 +16,13 @@ def _stub_args() -> Namespace:
         capture_interval_s=1.0,
         capture_max_frames=1,
         capture_max_seconds=0.0,
+        motion_backend="stub",
+        motion_port="/dev/ttyUSB0",
+        motion_baud=115200,
+        motion_impact_threshold=0.22,
+        motion_jerk_threshold=5.0,
+        motion_refractory_ms=300,
+        motion_monitor_seconds=1.0,
     )
 
 
@@ -29,6 +36,13 @@ def _onnx_missing_args() -> Namespace:
         capture_interval_s=1.0,
         capture_max_frames=1,
         capture_max_seconds=0.0,
+        motion_backend="stub",
+        motion_port="/dev/ttyUSB0",
+        motion_baud=115200,
+        motion_impact_threshold=0.22,
+        motion_jerk_threshold=5.0,
+        motion_refractory_ms=300,
+        motion_monitor_seconds=1.0,
     )
 
 

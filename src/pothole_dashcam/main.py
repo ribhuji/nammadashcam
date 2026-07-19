@@ -4,15 +4,20 @@ from __future__ import annotations
 
 import argparse
 import logging
+import time
 from pathlib import Path
 
 from pothole_dashcam.services.camera_buffer_service import CameraBufferService
 from pothole_dashcam.services.camera_service import StubCameraService, UsbCameraService
 from pothole_dashcam.services.capture_loop_service import CaptureLoopService
-from pothole_dashcam.services.event_consumer import StubEventConsumer
 from pothole_dashcam.services.inference_service import (
     OnnxPotholeInferenceService,
     StubInferenceService,
+)
+from pothole_dashcam.services.mcu_motion_service import (
+    PotholeHeuristicFilter,
+    SerialMotionLineSource,
+    parse_movement_line,
 )
 from pothole_dashcam.services.upload_service import StubUploadService
 
@@ -70,6 +75,48 @@ def parse_args() -> argparse.Namespace:
         default=0.0,
         help="Optional duration limit in seconds for one run (0 means unbounded)",
     )
+    parser.add_argument(
+        "--motion-backend",
+        choices=("stub", "serial"),
+        default="stub",
+        help="Motion event backend (default: stub)",
+    )
+    parser.add_argument(
+        "--motion-port",
+        type=str,
+        default="/dev/ttyUSB0",
+        help="Serial port for MCU motion stream when backend is serial",
+    )
+    parser.add_argument(
+        "--motion-baud",
+        type=int,
+        default=115200,
+        help="Baud rate for MCU motion stream (default: 115200)",
+    )
+    parser.add_argument(
+        "--motion-impact-threshold",
+        type=float,
+        default=0.22,
+        help="Impact threshold in g for possible pothole trigger",
+    )
+    parser.add_argument(
+        "--motion-jerk-threshold",
+        type=float,
+        default=5.0,
+        help="Jerk threshold in g/s for possible pothole trigger",
+    )
+    parser.add_argument(
+        "--motion-refractory-ms",
+        type=int,
+        default=300,
+        help="Minimum milliseconds between emitted possible pothole events",
+    )
+    parser.add_argument(
+        "--motion-monitor-seconds",
+        type=float,
+        default=10.0,
+        help="How long to monitor motion stream in serial mode",
+    )
     return parser.parse_args()
 
 
@@ -82,12 +129,18 @@ def bootstrap(
     capture_interval_s: float,
     capture_max_frames: int,
     capture_max_seconds: float,
+    motion_backend: str,
+    motion_port: str,
+    motion_baud: int,
+    motion_impact_threshold: float,
+    motion_jerk_threshold: float,
+    motion_refractory_ms: int,
+    motion_monitor_seconds: float,
 ) -> None:
     """Initialize runtime dependencies and start continuous capture pipeline."""
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 
-    # Dependency placeholders to unblock teammate parallel work.
-    _ = StubEventConsumer()
+    # Dependency placeholder to unblock teammate parallel work.
     _ = StubUploadService()
 
     frame_buffer = CameraBufferService(
@@ -136,14 +189,57 @@ def bootstrap(
 
     _ = inference_handle
 
-    captured = 0
+    motion_source = None
+    if motion_backend == "serial":
+        motion_source = SerialMotionLineSource(port=motion_port, baud=motion_baud, timeout_s=0.5)
+        filter_handle = PotholeHeuristicFilter(
+            impact_threshold_g=motion_impact_threshold,
+            jerk_threshold_gps=motion_jerk_threshold,
+            refractory_ms=motion_refractory_ms,
+        )
+        LOGGER.info(
+            "monitoring motion serial stream on %s at %s baud for %.1fs",
+            motion_port,
+            motion_baud,
+            motion_monitor_seconds,
+        )
+
+        started = time.monotonic()
+        while (time.monotonic() - started) < motion_monitor_seconds:
+            line = motion_source.readline()
+            if not line:
+                continue
+            sample = parse_movement_line(line)
+            if sample is None:
+                continue
+            event = filter_handle.process(sample)
+            if event is not None:
+                LOGGER.info(
+                    "MAYBE_POTHOLE timestamp_ms=%s impact_g=%.3f jerk_gps=%.3f mag_g=%.3f",
+                    event.timestamp_ms,
+                    event.impact_g,
+                    event.jerk_gps,
+                    event.magnitude_g,
+                )
+    else:
+        captured = 0
+        try:
+            captured = capture_loop.run(max_captures=max_frames_arg, max_duration_s=max_seconds_arg)
+            LOGGER.info("capture loop completed, frames captured=%s", captured)
+            LOGGER.info("frame buffer count=%s", frame_buffer.frame_count())
+        finally:
+            camera_handle.close()
+            frame_buffer.close()
+        LOGGER.info("pothole_dashcam bootstrap complete")
+        return
+
     try:
-        captured = capture_loop.run(max_captures=max_frames_arg, max_duration_s=max_seconds_arg)
-        LOGGER.info("capture loop completed, frames captured=%s", captured)
-        LOGGER.info("frame buffer count=%s", frame_buffer.frame_count())
+        LOGGER.info("motion monitoring complete")
     finally:
         camera_handle.close()
         frame_buffer.close()
+        if motion_source is not None:
+            motion_source.close()
 
     LOGGER.info("pothole_dashcam bootstrap complete")
 
@@ -160,6 +256,13 @@ def main() -> None:
         capture_interval_s=args.capture_interval_s,
         capture_max_frames=args.capture_max_frames,
         capture_max_seconds=args.capture_max_seconds,
+        motion_backend=args.motion_backend,
+        motion_port=args.motion_port,
+        motion_baud=args.motion_baud,
+        motion_impact_threshold=args.motion_impact_threshold,
+        motion_jerk_threshold=args.motion_jerk_threshold,
+        motion_refractory_ms=args.motion_refractory_ms,
+        motion_monitor_seconds=args.motion_monitor_seconds,
     )
 
 
