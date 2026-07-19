@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import importlib
 import json
 import time
 from collections import deque
 from dataclasses import dataclass
 from threading import Lock
-from typing import Protocol
+from typing import Any, Protocol
 
 
 @dataclass(frozen=True)
@@ -65,6 +66,30 @@ class SerialMotionLineSource:
         self._serial.close()
 
 
+def _resolve_bridge_api() -> Any:
+    """Locate Bridge API across known UNO Q Python module layouts."""
+    candidate_imports = (
+        ("arduino.app_utils", "Bridge"),
+        ("app_utils", "Bridge"),
+        ("router_bridge", "Bridge"),
+        ("arduino_router_bridge", "Bridge"),
+    )
+
+    for module_name, attr_name in candidate_imports:
+        try:
+            module = importlib.import_module(module_name)
+        except ImportError:
+            continue
+        if hasattr(module, attr_name):
+            return getattr(module, attr_name)
+
+    msg = (
+        "UNO Q bridge API not found. Install/enable Router Bridge Python runtime "
+        "or set PYTHONPATH to include bridge modules."
+    )
+    raise RuntimeError(msg)
+
+
 class BridgeMotionSampleSource:
     """Bridge-backed source that receives MCU motion samples via RPC callbacks."""
 
@@ -75,23 +100,22 @@ class BridgeMotionSampleSource:
 
         self._queue: deque[MotionSample] = deque(maxlen=max_queue_size)
         self._lock = Lock()
-        self._bridge_instance = None
+        self._bridge_instance: Any | None = None
 
-        try:
-            from arduino.app_utils import Bridge as bridge_api  # pylint: disable=import-outside-toplevel
-        except ImportError as exc:  # pragma: no cover - runtime dependency on target
-            msg = "arduino.app_utils Bridge is required for bridge motion ingestion"
-            raise RuntimeError(msg) from exc
+        bridge_api = _resolve_bridge_api()
 
         # Support either module-level static API or class instance API.
         if hasattr(bridge_api, "provide"):
             bridge_api.provide(channel_name, self._bridge_callback)
-        else:
+        elif callable(bridge_api):
             self._bridge_instance = bridge_api()
             if not hasattr(self._bridge_instance, "provide"):
                 msg = "Bridge API missing provide() registration function"
                 raise RuntimeError(msg)
             self._bridge_instance.provide(channel_name, self._bridge_callback)
+        else:
+            msg = "Bridge API missing provide() registration function"
+            raise RuntimeError(msg)
 
     def _bridge_callback(self, *args, **kwargs) -> None:
         """Decode callback payload and enqueue a normalized motion sample."""
@@ -247,7 +271,7 @@ def parse_bridge_sample_payload(payload: object, now_ms: int | None = None) -> M
     return None
 
 
-def parse_bridge_callback_payload(args: tuple[object, ...], kwargs: dict[str, object]) -> MotionSample | None:
+def parse_bridge_callback_payload(args: tuple[Any, ...], kwargs: dict[str, Any]) -> MotionSample | None:
     """Parse callback argument forms used by UNO Q bridge transports."""
     if "payload" in kwargs:
         return parse_bridge_sample_payload(kwargs["payload"])
