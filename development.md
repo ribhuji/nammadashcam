@@ -47,7 +47,7 @@ Default test run remains hardware/model independent:
 pytest -q
 ```
 
-Run real ONNX tests (requires `models/best.onnx`):
+Run real ONNX tests (uses committed model at `models/best.onnx`):
 
 ```bash
 RUN_ONNX_REAL_TEST=1 INFERENCE_CONF=0.5 pytest -q tests/test_inference_service.py
@@ -63,6 +63,14 @@ Bundled sample images:
 
 - `tests/assets/pothole_sample.jpg`
 - `tests/assets/non_pothole_sample.jpg`
+
+## Model Location
+
+The ONNX model is now stored in-repo at:
+
+- `models/best.onnx`
+
+This is the default model path used by the runtime CLI (`--onnx-model-path models/best.onnx`), so non-stub inference can run immediately without additional model download steps.
 
 ## Runtime Behavior
 
