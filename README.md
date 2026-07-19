@@ -1,7 +1,7 @@
 # NammaDashcam
 
 <p align="center">
-  <img src="images/image.png" alt="NammaDashcam Logo" width="260" />
+  <img src="images/NammaDashcamLogo.png" alt="NammaDashcam Logo" width="760" />
 </p>
 
 ## Crowdsourced Pothole Reporting & Tracking
@@ -54,17 +54,45 @@ NammaDashcam aims to create safer roads and more efficient transportation networ
 - **Local Authorities and Road Maintenance Agencies**
   - Access actionable data for planning, prioritization, and timely repair operations.
 
+## System Design
+
+### Circuit Diagram
+
+<p align="center">
+  <img src="images/CircuitDiagramNammaDashcam.png" alt="NammaDashcam Circuit Diagram" width="900" />
+</p>
+
 ## Project Status
 
-- Python-first runtime scaffold with modular services.
-- Continuous frame capture loop and fixed-window buffer retention.
-- ONNX-based pothole inference path with fallback stubs for modular development.
+### What is already built
+
+- Python-first runtime scaffold with modular, swappable services.
+- USB camera integration and continuous frame capture loop.
+- Fixed-window frame buffering with retention policy (10 minutes / 600 frames) backed by SQLite + file storage.
+- ONNXRuntime inference integration using committed model (`models/best.onnx`).
+- Stub camera/inference/event/upload services to unblock parallel team development without hardware.
+- CLI-driven backend selection for stub vs hardware/ONNX workflows.
+- Test coverage for buffer, camera, capture loop, inference, and smoke paths.
+- CI checks for linting and tests.
+
+### Current milestone
+
+- Hardware capture and model inference are both validated on UNO Q Linux-side runtime.
+- Real ONNX tests pass on target device at practical confidence thresholds.
 
 ## Development Details
 
 All engineering setup, CLI usage, hardware run commands, and test workflows are documented in:
 
 - [`development.md`](development.md)
+
+## Build Snapshot
+
+### State as of 5:00 PM, 19 July
+
+<p align="center">
+  <img src="images/BuildPictureNammaDashcam.jpeg" alt="NammaDashcam Build Photo - 19 July 5PM" width="900" />
+</p>
 
 ## Vision
 
