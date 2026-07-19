@@ -1,128 +1,71 @@
-# nammadashcam
+# NammaDashcam
 
-Python-first hackathon bootstrap for a collaboration-ready pothole detection pipeline on Arduino UNO Q Linux side.
+<p align="center">
+  <img src="images/image.png" alt="NammaDashcam Logo" width="260" />
+</p>
 
-## Objective
-Build a modular service flow for:
+## Crowdsourced Pothole Reporting & Tracking
 
-- accelerometer-triggered event intake,
-- camera frame retrieval,
-- pothole inference,
-- evidence upload.
+NammaDashcam turns ordinary car journeys into a source of valuable data for community infrastructure. We are building a smart dashcam-based system that automatically identifies and reports potholes, creating a comprehensive and up-to-date map of road conditions.
 
-The current commit provides contracts and stubs so teammates can work in parallel without blocking each other.
+## How It Works
 
-## High-Level Architecture
+1. **Seamless Detection**
+   - NammaDashcam, equipped with a high-resolution camera, accelerometer, and GPS, continuously monitors the road as you drive.
+   - It distinguishes between normal road noise and the distinct impact pattern of a pothole.
 
-```text
-Accel Event Producer -> Event Consumer -> Camera Service -> Inference Service -> Upload Service
-```
+2. **Instant Cloud Upload**
+   - When a pothole is detected, the system captures evidence and location data.
+   - This data is securely uploaded to the cloud, building a precise map of road hazards.
 
-## Quickstart
+3. **Community-Driven Verification**
+   - As more vehicles with NammaDashcam traverse the same roads, each pothole report is continuously validated with new observations.
+   - This crowdsourced signal improves confidence and reduces false positives.
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements-dev.txt
-ruff check .
-pytest -q
-PYTHONPATH=src python -m pothole_dashcam.main --camera-backend stub
-```
+4. **Tracking and Resolution**
+   - If subsequent passes at the same location no longer show pothole impact and visual evidence indicates repair, the pothole is marked **resolved**.
 
-## Team Workflow
+## Key Benefits
 
-- Branch naming: `feat/<module>-<name>`
-- Open PRs early and keep them small.
-- Run lint and smoke tests before pushing.
+- **Proactive Pothole Detection**
+  - Enable early hazard identification for faster repair and reduced vehicle damage.
 
-### Informal module ownership
+- **Data-Driven Infrastructure Planning**
+  - Provide local authorities with near real-time road quality data for effective maintenance prioritization.
 
-- Teammate A: accelerometer integration contract
-- Teammate B: camera pipeline
-- Teammate C: inference
-- Teammate D: cloud upload
+- **Crowdsourced and Scalable**
+  - Leverage many drivers to build a cost-effective, continuously updated road-condition map.
 
-## Current Status
+- **Improved Driver Safety**
+  - Surface road-risk information early so drivers can react safely.
 
-- Lean bootstrap scaffold complete.
-- Interface contracts and placeholder implementations present.
-- Fixed-window `CameraBufferService` (SQLite index + file retention) implemented.
-- USB camera capture service (`UsbCameraService`) integrated for Linux-side smoke capture.
-- CI baseline configured for lint + tests.
+## Impact
 
-## Hardware Run (UNO Q Linux side)
+NammaDashcam aims to create safer roads and more efficient transportation networks through community participation and data-driven infrastructure management.
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements-dev.txt
-PYTHONPATH=src python -m pothole_dashcam.main \
-  --camera-backend usb \
-  --camera-device-index 0 \
-  --inference-backend onnx \
-  --onnx-model-path models/best.onnx \
-  --inference-threshold 0.5 \
-  --capture-interval-s 1.0 \
-  --capture-max-seconds 600
-```
+## Target Audience
 
-Use stub backends when hardware/model is not connected:
+- **Drivers**
+  - Contribute to better roads and stay informed about road conditions.
 
-```bash
-PYTHONPATH=src python -m pothole_dashcam.main \
-  --camera-backend stub \
-  --inference-backend stub \
-  --capture-max-frames 10
-```
+- **Fleet Managers**
+  - Improve driver safety and reduce maintenance overhead from road damage.
 
-If `--inference-backend onnx` is selected but model file is missing, runtime
-automatically falls back to stub inference and logs a warning.
+- **Local Authorities and Road Maintenance Agencies**
+  - Access actionable data for planning, prioritization, and timely repair operations.
 
-Current runtime behavior:
+## Project Status
 
-- initializes `runtime/frames/` directory
-- initializes `runtime/frame_index.db` SQLite index
-- starts selected camera backend (`stub` or `usb`)
-- starts selected inference backend (`stub` or `onnx`)
-- runs continuous capture loop into `CameraBufferService`
-- enforces retention automatically via buffer policy (10 min / 600 frames)
+- Python-first runtime scaffold with modular services.
+- Continuous frame capture loop and fixed-window buffer retention.
+- ONNX-based pothole inference path with fallback stubs for modular development.
 
-Capture loop controls:
+## Development Details
 
-- `--capture-interval-s` (default `1.0`)
-- `--capture-max-frames` (default `0` = unbounded)
-- `--capture-max-seconds` (default `0` = unbounded)
+All engineering setup, CLI usage, hardware run commands, and test workflows are documented in:
 
-## Inference Tests
+- [`development.md`](development.md)
 
-Default test run remains hardware/model independent:
+## Vision
 
-```bash
-pytest -q
-```
-
-Optional real ONNX tests (requires `models/best.onnx` locally):
-
-Real ONNX checks use configurable confidence threshold (default `0.5`):
-
-```bash
-RUN_ONNX_REAL_TEST=1 INFERENCE_CONF=0.5 pytest -q tests/test_inference_service.py
-```
-
-Increase/decrease threshold for stricter/looser validation:
-
-```bash
-RUN_ONNX_REAL_TEST=1 INFERENCE_CONF=0.6 pytest -q tests/test_inference_service.py
-```
-
-Bundled sample images are available at:
-
-- `tests/assets/pothole_sample.jpg`
-- `tests/assets/non_pothole_sample.jpg`
-
-## Next Milestones
-
-1. Replace accelerometer adapter stub with teammate implementation.
-2. Integrate event-timestamp retrieval from frame buffer for inference.
-3. Connect upload backend.
-4. Add end-to-end event processing daemon mode.
+**NammaDashcam: Making every drive count for a better community.**
