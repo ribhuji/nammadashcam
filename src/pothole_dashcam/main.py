@@ -15,6 +15,7 @@ from pothole_dashcam.services.inference_service import (
     StubInferenceService,
 )
 from pothole_dashcam.services.mcu_motion_service import (
+    BridgeMotionSampleSource,
     PotholeHeuristicFilter,
     SerialMotionLineSource,
     parse_movement_line,
@@ -77,7 +78,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--motion-backend",
-        choices=("stub", "serial"),
+        choices=("stub", "serial", "bridge"),
         default="stub",
         help="Motion event backend (default: stub)",
     )
@@ -190,37 +191,62 @@ def bootstrap(
     _ = inference_handle
 
     motion_source = None
-    if motion_backend == "serial":
-        motion_source = SerialMotionLineSource(port=motion_port, baud=motion_baud, timeout_s=0.5)
+    if motion_backend in ("serial", "bridge"):
         filter_handle = PotholeHeuristicFilter(
             impact_threshold_g=motion_impact_threshold,
             jerk_threshold_gps=motion_jerk_threshold,
             refractory_ms=motion_refractory_ms,
         )
-        LOGGER.info(
-            "monitoring motion serial stream on %s at %s baud for %.1fs",
-            motion_port,
-            motion_baud,
-            motion_monitor_seconds,
-        )
 
-        started = time.monotonic()
-        while (time.monotonic() - started) < motion_monitor_seconds:
-            line = motion_source.readline()
-            if not line:
-                continue
-            sample = parse_movement_line(line)
-            if sample is None:
-                continue
-            event = filter_handle.process(sample)
-            if event is not None:
-                LOGGER.info(
-                    "MAYBE_POTHOLE timestamp_ms=%s impact_g=%.3f jerk_gps=%.3f mag_g=%.3f",
-                    event.timestamp_ms,
-                    event.impact_g,
-                    event.jerk_gps,
-                    event.magnitude_g,
-                )
+        if motion_backend == "serial":
+            motion_source = SerialMotionLineSource(port=motion_port, baud=motion_baud, timeout_s=0.5)
+            LOGGER.info(
+                "monitoring motion serial stream on %s at %s baud for %.1fs",
+                motion_port,
+                motion_baud,
+                motion_monitor_seconds,
+            )
+
+            started = time.monotonic()
+            while (time.monotonic() - started) < motion_monitor_seconds:
+                line = motion_source.readline()
+                if not line:
+                    continue
+                sample = parse_movement_line(line)
+                if sample is None:
+                    continue
+                event = filter_handle.process(sample)
+                if event is not None:
+                    LOGGER.info(
+                        "MAYBE_POTHOLE timestamp_ms=%s impact_g=%.3f jerk_gps=%.3f mag_g=%.3f",
+                        event.timestamp_ms,
+                        event.impact_g,
+                        event.jerk_gps,
+                        event.magnitude_g,
+                    )
+        else:
+            motion_source = BridgeMotionSampleSource(channel_name="motion_sample")
+            LOGGER.info(
+                "monitoring motion bridge channel '%s' for %.1fs",
+                "motion_sample",
+                motion_monitor_seconds,
+            )
+
+            started = time.monotonic()
+            while (time.monotonic() - started) < motion_monitor_seconds:
+                sample = motion_source.read_sample()
+                if sample is None:
+                    time.sleep(0.01)
+                    continue
+                event = filter_handle.process(sample)
+                if event is not None:
+                    LOGGER.info(
+                        "MAYBE_POTHOLE timestamp_ms=%s impact_g=%.3f jerk_gps=%.3f mag_g=%.3f",
+                        event.timestamp_ms,
+                        event.impact_g,
+                        event.jerk_gps,
+                        event.magnitude_g,
+                    )
     else:
         captured = 0
         try:

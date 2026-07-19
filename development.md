@@ -80,6 +80,7 @@ Current runtime:
 - initializes `runtime/frame_index.db` SQLite index
 - starts selected camera backend (`stub` or `usb`)
 - starts selected inference backend (`stub` or `onnx`)
+- supports motion backends: `stub`, `serial` (interim), `bridge` (UNO Q internal recommended)
 - runs continuous capture loop into `CameraBufferService`
 - enforces retention automatically via buffer policy (10 min / 600 frames)
 
@@ -103,12 +104,39 @@ arduino-cli core update-index
 arduino-cli core install arduino:zephyr
 arduino-cli lib update-index
 arduino-cli lib install "Arduino_Modulino"
+arduino-cli lib install "Arduino_RouterBridge"
 ```
 
 Build firmware:
 
 ```bash
 arduino-cli compile --fqbn arduino:zephyr:unoq firmware/unoq_dashcam_mcu
+```
+
+### UNO Q Bridge motion run (recommended on-device)
+
+Run the Linux service with Bridge backend enabled:
+
+```bash
+PYTHONPATH=src python -m pothole_dashcam.main \
+  --camera-backend stub \
+  --inference-backend stub \
+  --motion-backend bridge \
+  --motion-monitor-seconds 30
+```
+
+This path consumes MCU `motion_sample` bridge callbacks and logs `MAYBE_POTHOLE ...` when thresholds are exceeded.
+
+### Legacy serial motion run (interim only)
+
+```bash
+PYTHONPATH=src python -m pothole_dashcam.main \
+  --camera-backend stub \
+  --inference-backend stub \
+  --motion-backend serial \
+  --motion-port /dev/ttyUSB0 \
+  --motion-baud 115200 \
+  --motion-monitor-seconds 30
 ```
 
 ## Notes

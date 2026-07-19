@@ -3,6 +3,8 @@
 from pothole_dashcam.services.mcu_motion_service import (
     MotionSample,
     PotholeHeuristicFilter,
+    parse_bridge_callback_payload,
+    parse_bridge_sample_payload,
     parse_movement_line,
 )
 
@@ -19,6 +21,33 @@ def test_parse_movement_line_valid_input() -> None:
 def test_parse_movement_line_invalid_input() -> None:
     assert parse_movement_line("HB,0,1000") is None
     assert parse_movement_line("A:bad,data|G:1,2,3") is None
+
+
+def test_parse_bridge_sample_payload_with_mapping() -> None:
+    sample = parse_bridge_sample_payload(
+        {
+            "ax": 0.1,
+            "ay": -0.2,
+            "az": 1.05,
+            "roll": 1.0,
+            "pitch": 2.0,
+            "yaw": 3.0,
+            "timestamp_ms": 555,
+        }
+    )
+    assert sample is not None
+    assert sample.timestamp_ms == 555
+    assert sample.ax_g == 0.1
+    assert sample.ay_g == -0.2
+    assert sample.az_g == 1.05
+
+
+def test_parse_bridge_callback_payload_positional_args() -> None:
+    sample = parse_bridge_callback_payload((0.1, -0.2, 1.0, 1.0, 2.0, 3.0, 999), {})
+    assert sample is not None
+    assert sample.timestamp_ms == 999
+    assert sample.ax_g == 0.1
+    assert sample.ay_g == -0.2
 
 
 def test_heuristic_filter_emits_event_on_impact() -> None:

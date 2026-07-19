@@ -4,7 +4,7 @@ This folder contains Arduino firmware used on the UNO Q microcontroller side for
 
 ## Layout
 
-- `unoq_dashcam_mcu/unoq_dashcam_mcu.ino` — Modulino Movement bring-up sketch using the official Arduino Modulino library.
+- `unoq_dashcam_mcu/unoq_dashcam_mcu.ino` — Modulino Movement publisher that sends raw motion samples to Linux via Arduino Router Bridge RPC.
 
 ## Dependencies
 
@@ -15,6 +15,7 @@ Required components:
 - Board core: `arduino:zephyr`
 - Board FQBN: `arduino:zephyr:unoq`
 - Library: `Arduino_Modulino` (pulls required transitive sensor libraries)
+- Library: `Arduino_RouterBridge`
 
 ## One-time setup (Arduino CLI)
 
@@ -23,6 +24,7 @@ arduino-cli core update-index
 arduino-cli core install arduino:zephyr
 arduino-cli lib update-index
 arduino-cli lib install "Arduino_Modulino"
+arduino-cli lib install "Arduino_RouterBridge"
 ```
 
 ## Build
@@ -45,19 +47,29 @@ Then upload (replace port as needed):
 arduino-cli upload -p /dev/cu.usbmodemXXXX --fqbn arduino:zephyr:unoq firmware/unoq_dashcam_mcu
 ```
 
-## Serial monitor
+## Optional USB serial monitor (debug only)
 
 ```bash
 arduino-cli monitor -p /dev/cu.usbmodemXXXX -c baudrate=115200
 ```
 
-Expected output format:
+Expected startup log:
 
-- `MODULINO_MOVEMENT_READY`
-- `A:<ax>,<ay>,<az>|G:<roll>,<pitch>,<yaw>`
+- `MODULINO_MOVEMENT_BRIDGE_READY`
+
+Motion samples are sent over Router Bridge RPC (`motion_sample`) rather than USB serial text lines.
+
+## UNO Q Bridge runtime handshake
+
+1. Flash MCU firmware from this directory.
+2. On Linux side, run Python with `--motion-backend bridge`.
+3. MCU publishes `motion_sample` callbacks with argument order:
+   - `ax_g, ay_g, az_g, roll_dps, pitch_dps, yaw_dps, timestamp_ms`
+4. Python receives callbacks and applies pothole heuristics.
 
 ## Notes for contributors
 
 - Use the official `Arduino_Modulino` API for UNO Q + Modulino Movement compatibility.
+- Use `Arduino_RouterBridge` for MCU→Linux communication on UNO Q internal path.
 - Keep firmware deterministic (fixed update cadence, no dynamic allocation in hot paths).
 - Keep Linux-side Python runtime and MCU firmware responsibilities separate.

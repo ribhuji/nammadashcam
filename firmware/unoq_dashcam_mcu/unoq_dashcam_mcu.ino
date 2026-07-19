@@ -1,12 +1,18 @@
 #include <Arduino.h>
 #include <Arduino_Modulino.h>
+#include <Arduino_RouterBridge.h>
 
 /*
- * Bring-up sketch to validate Modulino Movement visibility on UNO Q MCU side.
- * Uses official Arduino_Modulino API exactly as intended for this hardware.
+ * UNO Q MCU motion publisher.
+ *
+ * Reads acceleration/gyro data via Arduino_Modulino and publishes each sample to
+ * Linux-side Python over Arduino Router Bridge RPC.
  */
 
 ModulinoMovement movement;
+
+static const uint32_t kBridgeBootDelayMs = 1000UL;
+static const uint32_t kSamplePeriodMs = 100UL;
 
 float g_ax = 0.0F;
 float g_ay = 0.0F;
@@ -17,15 +23,19 @@ float g_yaw = 0.0F;
 
 void setup() {
   Serial.begin(115200);
-  const uint32_t start_ms = millis();
-  while ((!Serial) && ((millis() - start_ms) < 2000UL)) {
+  const uint32_t serial_start_ms = millis();
+  while ((!Serial) && ((millis() - serial_start_ms) < 2000UL)) {
     delay(1U);
   }
+
+  /* Router Bridge handshake: initialize MCU<->Linux RPC transport. */
+  Bridge.begin();
+  delay(kBridgeBootDelayMs);
 
   Modulino.begin();
   movement.begin();
 
-  Serial.println("MODULINO_MOVEMENT_READY");
+  Serial.println("MODULINO_MOVEMENT_BRIDGE_READY");
 }
 
 void loop() {
@@ -39,18 +49,10 @@ void loop() {
   g_pitch = movement.getPitch();
   g_yaw = movement.getYaw();
 
-  Serial.print("A:");
-  Serial.print(g_ax, 3);
-  Serial.print(",");
-  Serial.print(g_ay, 3);
-  Serial.print(",");
-  Serial.print(g_az, 3);
-  Serial.print("|G:");
-  Serial.print(g_roll, 1);
-  Serial.print(",");
-  Serial.print(g_pitch, 1);
-  Serial.print(",");
-  Serial.println(g_yaw, 1);
+  const uint32_t now_ms = millis();
 
-  delay(200U);
+  /* Bridge RPC publish: send normalized raw motion sample to Linux callback. */
+  Bridge.call("motion_sample", g_ax, g_ay, g_az, g_roll, g_pitch, g_yaw, now_ms);
+
+  delay(kSamplePeriodMs);
 }
