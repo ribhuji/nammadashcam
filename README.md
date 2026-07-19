@@ -46,11 +46,27 @@ PYTHONPATH=src python -m pothole_dashcam.main
 
 - Lean bootstrap scaffold complete.
 - Interface contracts and placeholder implementations present.
-- CI baseline configured for lint + smoke tests.
+- Fixed-window `CameraBufferService` (SQLite index + file retention) implemented.
+- USB camera capture service (`UsbCameraService`) integrated for Linux-side smoke capture.
+- CI baseline configured for lint + tests.
+
+## Hardware Run (UNO Q Linux side)
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+PYTHONPATH=src python -m pothole_dashcam.main
+```
+
+Successful run with webcam connected writes one smoke frame into:
+
+- `runtime/frames/`
+- indexed by `runtime/frame_index.db`
 
 ## Next Milestones
 
-1. Implement one end-to-end vertical slice with mock data.
+1. Add continuous 1 FPS capture loop for full 10-minute soak.
 2. Replace accelerometer adapter stub with teammate implementation.
-3. Integrate camera capture path and select best frame.
-4. Connect inference model and upload backend.
+3. Integrate event-timestamp retrieval from frame buffer for inference.
+4. Connect upload backend.

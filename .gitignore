@@ -22,5 +22,8 @@ build/
 .idea/
 .DS_Store
 
+# Runtime artifacts
+runtime/
+
 # Environment files
 .env
