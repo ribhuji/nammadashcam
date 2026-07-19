@@ -55,6 +55,19 @@ class UsbCameraService:
 class StubCameraService:
     """Placeholder camera service used during initial bootstrap."""
 
+    def __init__(self, stub_frame_bytes: bytes | None = None) -> None:
+        """Initialize deterministic frame payload for non-hardware runs."""
+        self._stub_frame_bytes = (
+            stub_frame_bytes if stub_frame_bytes is not None else b"stub_frame_payload"
+        )
+
+    def capture_jpeg_bytes(self) -> bytes:
+        """Return fixed payload used to exercise buffer pipeline without camera."""
+        return self._stub_frame_bytes
+
+    def close(self) -> None:
+        """No-op close to preserve API parity with USB camera service."""
+
     def get_frames_for_event(self, event: Event) -> list[FrameRef]:
         _ = event
         return []

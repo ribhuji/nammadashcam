@@ -61,7 +61,9 @@ PYTHONPATH=src python -m pothole_dashcam.main \
   --camera-device-index 0 \
   --inference-backend onnx \
   --onnx-model-path models/best.onnx \
-  --inference-threshold 0.5
+  --inference-threshold 0.5 \
+  --capture-interval-s 1.0 \
+  --capture-max-seconds 600
 ```
 
 Use stub backends when hardware/model is not connected:
@@ -69,18 +71,27 @@ Use stub backends when hardware/model is not connected:
 ```bash
 PYTHONPATH=src python -m pothole_dashcam.main \
   --camera-backend stub \
-  --inference-backend stub
+  --inference-backend stub \
+  --capture-max-frames 10
 ```
 
 If `--inference-backend onnx` is selected but model file is missing, runtime
 automatically falls back to stub inference and logs a warning.
 
-Current bootstrap initializes:
+Current runtime behavior:
 
-- `runtime/frames/` directory
-- `runtime/frame_index.db` SQLite index
-- selected camera backend (`stub` or `usb`)
-- selected inference backend (`stub` or `onnx`)
+- initializes `runtime/frames/` directory
+- initializes `runtime/frame_index.db` SQLite index
+- starts selected camera backend (`stub` or `usb`)
+- starts selected inference backend (`stub` or `onnx`)
+- runs continuous capture loop into `CameraBufferService`
+- enforces retention automatically via buffer policy (10 min / 600 frames)
+
+Capture loop controls:
+
+- `--capture-interval-s` (default `1.0`)
+- `--capture-max-frames` (default `0` = unbounded)
+- `--capture-max-seconds` (default `0` = unbounded)
 
 ## Inference Tests
 
@@ -111,7 +122,7 @@ Bundled sample images are available at:
 
 ## Next Milestones
 
-1. Add continuous 1 FPS capture loop for full 10-minute soak.
-2. Replace accelerometer adapter stub with teammate implementation.
-3. Integrate event-timestamp retrieval from frame buffer for inference.
-4. Connect upload backend.
+1. Replace accelerometer adapter stub with teammate implementation.
+2. Integrate event-timestamp retrieval from frame buffer for inference.
+3. Connect upload backend.
+4. Add end-to-end event processing daemon mode.

@@ -13,6 +13,9 @@ def _stub_args() -> Namespace:
         inference_backend="stub",
         onnx_model_path=Path("models/best.onnx"),
         inference_threshold=0.5,
+        capture_interval_s=1.0,
+        capture_max_frames=1,
+        capture_max_seconds=0.0,
     )
 
 
@@ -23,6 +26,9 @@ def _onnx_missing_args() -> Namespace:
         inference_backend="onnx",
         onnx_model_path=Path("models/does_not_exist.onnx"),
         inference_threshold=0.5,
+        capture_interval_s=1.0,
+        capture_max_frames=1,
+        capture_max_seconds=0.0,
     )
 
 
