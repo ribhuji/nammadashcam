@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import logging
 from pathlib import Path
 
@@ -11,14 +12,33 @@ from pothole_dashcam.services.event_consumer import StubEventConsumer
 from pothole_dashcam.services.inference_service import StubInferenceService
 from pothole_dashcam.services.upload_service import StubUploadService
 
+LOGGER = logging.getLogger(__name__)
 
-def bootstrap() -> None:
-    """Initialize minimal runtime dependencies for local execution."""
+
+def parse_args() -> argparse.Namespace:
+    """Parse runtime CLI options for backend selection."""
+    parser = argparse.ArgumentParser(description="Pothole dashcam bootstrap")
+    parser.add_argument(
+        "--camera-backend",
+        choices=("stub", "usb"),
+        default="stub",
+        help="Camera backend to initialize (default: stub)",
+    )
+    parser.add_argument(
+        "--camera-device-index",
+        type=int,
+        default=0,
+        help="Video device index for USB camera backend (default: 0)",
+    )
+    return parser.parse_args()
+
+
+def bootstrap(camera_backend: str, camera_device_index: int) -> None:
+    """Initialize runtime dependencies with selected camera backend."""
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 
     # Dependency placeholders to unblock teammate parallel work.
     _ = StubEventConsumer()
-    _ = StubCameraService()
     _ = StubInferenceService()
     _ = StubUploadService()
 
@@ -29,22 +49,26 @@ def bootstrap() -> None:
         max_frames=600,
     )
 
-    # Optional hardware smoke: capture one live frame if USB camera is available.
-    try:
-        usb_camera = UsbCameraService(device_index=0)
-        frame_ref = frame_buffer.capture_once(usb_camera.capture_jpeg_bytes())
-        usb_camera.close()
-        logging.getLogger(__name__).info("captured frame: %s", frame_ref.path)
-    except RuntimeError as exc:
-        logging.getLogger(__name__).warning("camera smoke capture skipped: %s", exc)
+    camera_handle: UsbCameraService | StubCameraService
+    if camera_backend == "usb":
+        camera_handle = UsbCameraService(device_index=camera_device_index)
+        LOGGER.info("initialized USB camera backend on /dev/video%s", camera_device_index)
+        camera_handle.close()
+    else:
+        camera_handle = StubCameraService()
+        LOGGER.info("initialized stub camera backend")
 
+    _ = camera_handle
+
+    # Runtime frame buffer is created at bootstrap; capture loop runs in service phase.
     frame_buffer.close()
-    logging.getLogger(__name__).info("pothole_dashcam bootstrap complete")
+    LOGGER.info("pothole_dashcam bootstrap complete")
 
 
 def main() -> None:
     """CLI entrypoint."""
-    bootstrap()
+    args = parse_args()
+    bootstrap(camera_backend=args.camera_backend, camera_device_index=args.camera_device_index)
 
 
 if __name__ == "__main__":

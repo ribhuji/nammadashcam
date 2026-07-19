@@ -26,7 +26,7 @@ source .venv/bin/activate
 pip install -r requirements-dev.txt
 ruff check .
 pytest -q
-PYTHONPATH=src python -m pothole_dashcam.main
+PYTHONPATH=src python -m pothole_dashcam.main --camera-backend stub
 ```
 
 ## Team Workflow
@@ -56,13 +56,19 @@ PYTHONPATH=src python -m pothole_dashcam.main
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements-dev.txt
-PYTHONPATH=src python -m pothole_dashcam.main
+PYTHONPATH=src python -m pothole_dashcam.main --camera-backend usb --camera-device-index 0
 ```
 
-Successful run with webcam connected writes one smoke frame into:
+Use stub backend when camera hardware is not connected:
 
-- `runtime/frames/`
-- indexed by `runtime/frame_index.db`
+```bash
+PYTHONPATH=src python -m pothole_dashcam.main --camera-backend stub
+```
+
+Current bootstrap initializes:
+
+- `runtime/frames/` directory
+- `runtime/frame_index.db` SQLite index
 
 ## Next Milestones
 
