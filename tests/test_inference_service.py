@@ -126,13 +126,39 @@ def test_real_onnx_model_on_sample_pothole_image() -> None:
     """
     model_path = Path("models/best.onnx")
     image_path = Path("tests/assets/pothole_sample.jpg")
+    inference_conf = float(os.getenv("INFERENCE_CONF", "0.5"))
 
     assert model_path.exists(), "models/best.onnx not found"
     assert image_path.exists(), "tests/assets/pothole_sample.jpg not found"
 
-    service = OnnxPotholeInferenceService(model_path=model_path, confidence_threshold=0.5)
+    service = OnnxPotholeInferenceService(
+        model_path=model_path,
+        confidence_threshold=inference_conf,
+    )
     result = service.infer_image_path(image_path)
 
-    assert result.label in {"pothole", "no_pothole"}
-    assert 0.0 <= result.confidence <= 1_000_000.0
+    assert result.label == "pothole"
+    assert result.confidence >= inference_conf
     assert "model_path" in result.metadata
+
+
+@pytest.mark.skipif(
+    os.getenv("RUN_ONNX_REAL_TEST") != "1",
+    reason="set RUN_ONNX_REAL_TEST=1 and provide test ONNX model to run",
+)
+def test_real_onnx_model_on_sample_non_pothole_image() -> None:
+    """Run real ONNX inference on bundled non-pothole image."""
+    model_path = Path("models/best.onnx")
+    negative_image_path = Path("tests/assets/non_pothole_sample.jpg")
+    inference_conf = float(os.getenv("INFERENCE_CONF", "0.5"))
+
+    assert model_path.exists(), "models/best.onnx not found"
+    assert negative_image_path.exists(), "tests/assets/non_pothole_sample.jpg not found"
+
+    service = OnnxPotholeInferenceService(
+        model_path=model_path,
+        confidence_threshold=inference_conf,
+    )
+    result = service.infer_image_path(negative_image_path)
+
+    assert result.confidence <= inference_conf

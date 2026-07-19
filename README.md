@@ -90,15 +90,24 @@ Default test run remains hardware/model independent:
 pytest -q
 ```
 
-Optional real ONNX test (requires `models/best.onnx` locally):
+Optional real ONNX tests (requires `models/best.onnx` locally):
+
+Real ONNX checks use configurable confidence threshold (default `0.5`):
 
 ```bash
-RUN_ONNX_REAL_TEST=1 pytest -q tests/test_inference_service.py
+RUN_ONNX_REAL_TEST=1 INFERENCE_CONF=0.5 pytest -q tests/test_inference_service.py
 ```
 
-Bundled pothole sample image is available at:
+Increase/decrease threshold for stricter/looser validation:
+
+```bash
+RUN_ONNX_REAL_TEST=1 INFERENCE_CONF=0.6 pytest -q tests/test_inference_service.py
+```
+
+Bundled sample images are available at:
 
 - `tests/assets/pothole_sample.jpg`
+- `tests/assets/non_pothole_sample.jpg`
 
 ## Next Milestones
 
