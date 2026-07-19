@@ -56,19 +56,49 @@ PYTHONPATH=src python -m pothole_dashcam.main --camera-backend stub
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements-dev.txt
-PYTHONPATH=src python -m pothole_dashcam.main --camera-backend usb --camera-device-index 0
+PYTHONPATH=src python -m pothole_dashcam.main \
+  --camera-backend usb \
+  --camera-device-index 0 \
+  --inference-backend onnx \
+  --onnx-model-path models/best.onnx \
+  --inference-threshold 0.5
 ```
 
-Use stub backend when camera hardware is not connected:
+Use stub backends when hardware/model is not connected:
 
 ```bash
-PYTHONPATH=src python -m pothole_dashcam.main --camera-backend stub
+PYTHONPATH=src python -m pothole_dashcam.main \
+  --camera-backend stub \
+  --inference-backend stub
 ```
+
+If `--inference-backend onnx` is selected but model file is missing, runtime
+automatically falls back to stub inference and logs a warning.
 
 Current bootstrap initializes:
 
 - `runtime/frames/` directory
 - `runtime/frame_index.db` SQLite index
+- selected camera backend (`stub` or `usb`)
+- selected inference backend (`stub` or `onnx`)
+
+## Inference Tests
+
+Default test run remains hardware/model independent:
+
+```bash
+pytest -q
+```
+
+Optional real ONNX test (requires `models/best.onnx` locally):
+
+```bash
+RUN_ONNX_REAL_TEST=1 pytest -q tests/test_inference_service.py
+```
+
+Bundled pothole sample image is available at:
+
+- `tests/assets/pothole_sample.jpg`
 
 ## Next Milestones
 
